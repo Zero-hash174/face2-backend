@@ -27,15 +27,19 @@ app.post('/send-notification', async (req, res) => {
     };
 
     if (title || body) {
-        message.notification = { title, body };
-        message.android.notification = {
-            channel_id: 'face2_msg_v16_custom',
-            sound: 'incoming_message',
-            default_sound: false,
-            default_vibrate_timings: true
-        };
-    }
+    message.notification = { title, body };
+    
+    // التحقق مما إذا كانت الرسالة عبارة عن مكالمة
+    const isCall = data && data.type === 'call_offer';
 
+    message.android.notification = {
+        // 🔴 إذا كانت مكالمة، استخدم القناة الجديدة ونغمة الرنين
+        channel_id: isCall ? 'face2_incoming_call_v2' : 'face2_msg_v16_custom',
+        sound: isCall ? 'call_ringtone' : 'incoming_message',
+        default_sound: false,
+        default_vibrate_timings: true
+    };
+}
     try {
         const response = await admin.messaging().send(message);
         res.status(200).send({ success: true, response });
