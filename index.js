@@ -6,9 +6,7 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// قراءة المفتاح الخاص من متغيرات البيئة في Vercel
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
 if (!admin.apps.length) {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
@@ -20,23 +18,28 @@ app.post('/send-notification', async (req, res) => {
 
     if (!token) return res.status(400).send('Token is required');
 
-    // التحقق من نوع الحدث (مكالمة أم لا)
     const isCall = data && (data.type === 'call_offer' || data.type === 'call_hangup');
 
-    // الهيكل الأساسي للرسالة (الأولوية العالية مطلوبة دائماً)
+    // الهيكل الأساسي للرسالة
     const message = {
         token: token,
-        data: data || {},
+        data: data || {}, // البيانات ستُمرر إلى MainActivity عند النقر
         android: { priority: 'high' }
     };
 
-    if (isCall) {
-        // 🟢 إذا كانت مكالمة:
-        // نرسلها كـ Pure Data Message فقط لإيقاظ أندرويد 14 في الخلفية.
-        // لا نقوم بإضافة message.notification نهائياً هنا.
+    if (isCall && data.type === 'call_offer') {
+        // 🔥 إجبار خدمات جوجل على إظهار الإشعار حتى لو كان التطبيق مقتولاً 🔥
+        message.notification = { 
+            title: "📞 مكالمة واردة", 
+            body: `لديك مكالمة من ${data.callerName}` 
+        };
+        message.android.notification = {
+            channel_id: 'face2_incoming_call_v4_no_sound', // يجب أن يطابق الموجود في التطبيق
+            default_vibrate_timings: true,
+            default_sound: true
+        };
     } else if (title || body) {
-        // 🔵 إذا كانت رسالة دردشة عادية:
-        // نضيف قسم الإشعارات لكي يظهر للمستخدم بشكل طبيعي
+        // رسائل الدردشة العادية
         message.notification = { title, body };
         message.android.notification = {
             channel_id: 'face2_msg_v16_custom',
@@ -55,5 +58,4 @@ app.post('/send-notification', async (req, res) => {
     }
 });
 
-// تصدير التطبيق ليتوافق مع Vercel
 module.exports = app;
