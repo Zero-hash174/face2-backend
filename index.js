@@ -33,19 +33,21 @@ app.post('/send-notification', async (req, res) => {
             title: "📞 مكالمة واردة", 
             body: `لديك مكالمة من ${data.callerName}` 
         };
+        // تم تصحيح الخصائص إلى camelCase
         message.android.notification = {
-            channel_id: 'face2_incoming_call_v4_no_sound', // يجب أن يطابق الموجود في التطبيق
-            default_vibrate_timings: true,
-            default_sound: true
+            channelId: 'face2_incoming_call_v4_no_sound', 
+            defaultVibrateTimings: true,
+            defaultSound: true
         };
     } else if (title || body) {
         // رسائل الدردشة العادية
         message.notification = { title, body };
+        // تم تصحيح الخصائص إلى camelCase
         message.android.notification = {
-            channel_id: 'face2_msg_v16_custom',
+            channelId: 'face2_msg_v16_custom',
             sound: 'incoming_message',
-            default_sound: false,
-            default_vibrate_timings: true
+            defaultSound: false,
+            defaultVibrateTimings: true
         };
     }
 
