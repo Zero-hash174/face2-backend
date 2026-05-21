@@ -20,29 +20,23 @@ app.post('/send-notification', async (req, res) => {
 
     const isCall = data && (data.type === 'call_offer' || data.type === 'call_hangup');
 
-    // الهيكل الأساسي للرسالة
     const message = {
         token: token,
-        data: data || {}, // البيانات ستُمرر إلى MainActivity عند النقر
+        data: data || {}, 
         android: { priority: 'high' }
     };
 
+    // ❌ احذف هذا الجزء تماماً للمكالمات لكي يستيقظ التطبيق في الخلفية
+    /*
     if (isCall && data.type === 'call_offer') {
-        // 🔥 إجبار خدمات جوجل على إظهار الإشعار حتى لو كان التطبيق مقتولاً 🔥
-        message.notification = { 
-            title: "📞 مكالمة واردة", 
-            body: `لديك مكالمة من ${data.callerName}` 
-        };
-        // تم تصحيح الخصائص إلى camelCase
-        message.android.notification = {
-            channelId: 'face2_incoming_call_v4_no_sound', 
-            defaultVibrateTimings: true,
-            defaultSound: true
-        };
-    } else if (title || body) {
-        // رسائل الدردشة العادية
+        message.notification = { title: "📞 مكالمة واردة", body: `لديك مكالمة من ${data.callerName}` };
+        message.android.notification = { ... };
+    }
+    */
+   
+    // ✅ احتفظ بالإشعارات لرسائل الدردشة العادية فقط
+    if (!isCall && (title || body)) {
         message.notification = { title, body };
-        // تم تصحيح الخصائص إلى camelCase
         message.android.notification = {
             channelId: 'face2_msg_v16_custom',
             sound: 'incoming_message',
